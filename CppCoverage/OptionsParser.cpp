@@ -88,10 +88,10 @@ namespace CppCoverage
 			if (value.find(notWindowsPathSeparator) != std::string::npos)
 			{
 				throw OptionsParserException(
-				    "Error: Invalid value \""
-				    "--" +
-				    name + ' ' + value + "\". " +
-				    "Please use Windows path separator '\\'.");
+					"Error: Invalid value \""
+					"--" +
+					name + ' ' + value + "\". " +
+					"Please use Windows path separator '\\'.");
 			}
 
 			// Do not iterate over path: path{"Folder\\"}.filename() == '.'
@@ -211,6 +211,19 @@ namespace CppCoverage
 			return exportString;
 		}
 
+		void AddInputCoverageFiles(const std::vector<std::string>& inputCoveragePaths, Options& options)
+		{
+			for (const auto& path : inputCoveragePaths)
+			{
+				if (!fs::exists(path))
+				{
+					throw OptionsParserException("Argument of " +
+						ProgramOptions::InputCoverageValue + " <" + path + "> does not exist.");
+				}
+
+				options.AddInputCoveragePath(path);
+			}
+		}
 
 		//---------------------------------------------------------------------
 		void AddInputCoverages(
@@ -222,15 +235,36 @@ namespace CppCoverage
 
 			if (inputCoveragePaths)
 			{
-				for (const auto& path : *inputCoveragePaths)
+				AddInputCoverageFiles(*inputCoveragePaths,options);
+			}
+
+			// get all files from input coverage folder
+			auto inputCoverageFolders = GetOptionalValue<std::vector<std::string>>(variables, ProgramOptions::InputCoverageFolder);
+			if(inputCoverageFolders)
+			{
+				std::vector<std::string> inputFiles;
+				for (const auto& path : *inputCoverageFolders)
 				{
 					if (!fs::exists(path))
 					{
-						throw OptionsParserException("Argument of " + 
-							ProgramOptions::InputCoverageValue + " <" + path + "> does not exist.");
+						throw OptionsParserException("Argument of " +
+							ProgramOptions::InputCoverageFolder + " <" + path + "> does not exist.");
 					}
-
-					options.AddInputCoveragePath(path);
+					
+					boost::filesystem::recursive_directory_iterator iter(path), eod;
+					for( const auto& entry: iter)
+					{
+						// If it's not a directory, list it.
+						if (is_regular_file(entry.path())) 
+						{
+							// assign current file name to current_file and echo it out to the console.
+							inputFiles.push_back(entry.path().string());
+						}
+					}
+				}
+				if (!inputFiles.empty())
+				{
+					AddInputCoverageFiles(inputFiles, options);
 				}
 			}
 		}
@@ -295,27 +329,27 @@ namespace CppCoverage
 		{
 			auto pos = paths.find(OptionsParser::PathSeparator);
 			const auto error = "Invalid value for " +
-			                   ProgramOptions::SubstitutePdbSourcePathOption + ". ";
+							   ProgramOptions::SubstitutePdbSourcePathOption + ". ";
 			if (pos == std::string::npos)
 			{
 				throw OptionsParserException(error + "Cannot find " +
-				                             OptionsParser::PathSeparator +
-				                             '.');
+											 OptionsParser::PathSeparator +
+											 '.');
 			}
 
 			auto pdbPath = paths.substr(0, pos);
 			if (pdbPath.find('/') != std::string::npos)
 			{
 				throw OptionsParserException(
-				    error + "Path \"" + pdbPath +
-				    "\" contains '/' which is not the Windows path separator. "
-				    "Please use '\\' instead.");
+					error + "Path \"" + pdbPath +
+					"\" contains '/' which is not the Windows path separator. "
+					"Please use '\\' instead.");
 			}
 			auto localPath = paths.substr(pos + 1);
 			if (!fs::exists(localPath))
 			{
 				throw OptionsParserException(error + "Path \"" + localPath +
-				                             "\" does not exist.");
+											 "\" does not exist.");
 			}
 
 			return SubstitutePdbSourcePath{pdbPath, localPath};
@@ -323,25 +357,25 @@ namespace CppCoverage
 
 		//---------------------------------------------------------------------
 		void AddSubstitutePdbSourcePaths(const po::variables_map& variables,
-		                                Options& options)
+										Options& options)
 		{
 			auto substitutePdbSourcePaths =
-			    GetOptionalValue<std::vector<std::string>>(
-			        variables, ProgramOptions::SubstitutePdbSourcePathOption);
+				GetOptionalValue<std::vector<std::string>>(
+					variables, ProgramOptions::SubstitutePdbSourcePathOption);
 
 			if (substitutePdbSourcePaths)
 			{
 				for (const auto& paths : *substitutePdbSourcePaths)
 				{
 					options.AddSubstitutePdbSourcePath(
-					    CreateSubstitutePdbSourcePath(paths));
+						CreateSubstitutePdbSourcePath(paths));
 				}
 			}
 		}
 		//---------------------------------------------------------------------------
 		void CheckArgumentsSize(int argc,
-		                        const char** argv,
-		                        Tools::WarningManager& warningManager)
+								const char** argv,
+								Tools::WarningManager& warningManager)
 		{
 			size_t estimatedSize = 0;
 			for (int i = 0; i < argc; ++i)
@@ -368,8 +402,8 @@ namespace CppCoverage
 
 	//-------------------------------------------------------------------------
 	OptionsParser::OptionsParser(
-	    std::shared_ptr<Tools::WarningManager> warningManager)
-	    : OptionsParser()
+		std::shared_ptr<Tools::WarningManager> warningManager)
+		: OptionsParser()
 	{
 		optionalWarningManager_ = std::move(warningManager);
 		if (!optionalWarningManager_)
@@ -380,11 +414,11 @@ namespace CppCoverage
 	OptionsParser::OptionsParser()
 	{
 		exportTypes_.emplace(ProgramOptions::ExportTypeHtmlValue,
-		                     OptionsExportType::Html);
+							 OptionsExportType::Html);
 		exportTypes_.emplace(ProgramOptions::ExportTypeCoberturaValue,
-		                     OptionsExportType::Cobertura);
+							 OptionsExportType::Cobertura);
 		exportTypes_.emplace(ProgramOptions::ExportTypeBinaryValue,
-		                     OptionsExportType::Binary);
+							 OptionsExportType::Binary);
 
 		programOptions_ = std::make_unique<ProgramOptions>();
 	}
@@ -526,10 +560,10 @@ namespace CppCoverage
 	std::wstring OptionsParser::GetTooLongCommandLineMessage()
 	{
 		return L"You have a very long command line. It might be truncated "
-		       "as DOS maximum command line size is " +
-		       std::to_wstring(DosCommandLineMaxSize) +
-		       L". Please consider using --" +
-		       Tools::LocalToWString(ProgramOptions::ConfigFileOption) +
-		       L" instead.";
+			   "as DOS maximum command line size is " +
+			   std::to_wstring(DosCommandLineMaxSize) +
+			   L". Please consider using --" +
+			   Tools::LocalToWString(ProgramOptions::ConfigFileOption) +
+			   L" instead.";
 	}
 }

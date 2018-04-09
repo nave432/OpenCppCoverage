@@ -44,17 +44,17 @@ namespace CppCoverage
 		std::string GetExportTypeText()
 		{
 			return "Format: <exportType>:<outputPath>.\n"
-			       "<exportType> can be: " +
-			       ProgramOptions::ExportTypeHtmlValue + ", " +
-			       ProgramOptions::ExportTypeCoberturaValue + " or " +
-			       ProgramOptions::ExportTypeBinaryValue +
-			       "\n<outputPath> (optional) export output path.\n"
-			       "Must be a folder for " +
-			       ProgramOptions::ExportTypeHtmlValue + " and a file for " +
-			       ProgramOptions::ExportTypeCoberturaValue + " or " +
-			       ProgramOptions::ExportTypeBinaryValue +
-			       ".\nExample: html:MyFolder\\MySubFolder\n"
-			       "This flag can have multiple occurrences.";
+				   "<exportType> can be: " +
+				   ProgramOptions::ExportTypeHtmlValue + ", " +
+				   ProgramOptions::ExportTypeCoberturaValue + " or " +
+				   ProgramOptions::ExportTypeBinaryValue +
+				   "\n<outputPath> (optional) export output path.\n"
+				   "Must be a folder for " +
+				   ProgramOptions::ExportTypeHtmlValue + " and a file for " +
+				   ProgramOptions::ExportTypeCoberturaValue + " or " +
+				   ProgramOptions::ExportTypeBinaryValue +
+				   ".\nExample: html:MyFolder\\MySubFolder\n"
+				   "This flag can have multiple occurrences.";
 		}
 
 		//---------------------------------------------------------------------
@@ -90,6 +90,9 @@ namespace CppCoverage
 				(ProgramOptions::InputCoverageValue.c_str(), po::value<T_Strings>()->composing(),
 				("A output path of " + ProgramOptions::ExportTypeOption + "=" + ProgramOptions::ExportTypeBinaryValue +
 				". This coverage data will be merged with the current one. Can have multiple occurrences.").c_str())
+				(ProgramOptions::InputCoverageFolder.c_str(), po::value<T_Strings>()->composing(),
+				("A folder which contain " + ProgramOptions::ExportTypeOption + "=" + ProgramOptions::ExportTypeBinaryValue +
+					"ouput. All the files in this folder will be merged with the current one. Can have multiple occurrences.").c_str())
 				(ProgramOptions::ExportTypeOption.c_str(),
 				po::value<T_Strings>()->default_value({ ProgramOptions::ExportTypeHtmlValue }, ProgramOptions::ExportTypeHtmlValue),
 				GetExportTypeText().c_str())
@@ -141,6 +144,7 @@ namespace CppCoverage
 	const std::string ProgramOptions::ExportTypeCoberturaValue = "cobertura";
 	const std::string ProgramOptions::ExportTypeBinaryValue = "binary";
 	const std::string ProgramOptions::InputCoverageValue = "input_coverage";
+	const std::string ProgramOptions::InputCoverageFolder = "input_coverage_folder";
 	const std::string ProgramOptions::UnifiedDiffOption = "unified_diff";
 	const std::string ProgramOptions::ContinueAfterCppExceptionOption = "continue_after_cpp_exception";
 	const std::string ProgramOptions::OptimizedBuildOption = "optimized_build";
